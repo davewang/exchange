@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>long-polling</title>
+    <style type="text/css">
+        .msg {padding: 10px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 8px;}
+    </style>
+    <script type="text/javascript" src="http://www.v2ex.com/static/js/jquery.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $('#uid').val(Date.now() % 10000);
+            var setTimeoutId = 0;
+            var ajax = null;
+            var getmessage = function() {
+                var data = {uid:$('#uid').val()};
+                ajax = $.getJSON('/pollmessage', data, function(resp) {
+                    if (resp.status == 0) {
+                        for (var i = 0; i < resp.messages.length; i++) {
+                            $('#messagelist').append('<div class="msg">'+resp.messages[i]+'</div>');
+                        };
+                    }
+                    if (setTimeoutId > 0) {
+                        setTimeoutId = setTimeout(getmessage, 3000);
+                    }
+                });
+                console.dir(ajax);
+            };
+            $('#getmessagebtn').click(function(){
+                this.disabled = true;
+                setTimeoutId = setTimeout(getmessage, 10);
+            });
+            $('#sendmessagebtn').click(function(){
+                var data = {uid:$('#senduid').val(), 'message':$('#message').val()};
+                $.post('/sendmessage', data, function(resp){}, 'json');
+            });
+            $('#stopgetmessagebtn').click(function(){
+                clearTimeout(setTimeoutId);
+                setTimeoutId = 0
+                if (ajax != null) {
+                    ajax.abort();
+                }
+                $('#getmessagebtn').prop('disabled', false);
+            });
+        });
+    </script>
+</head>
+<body>
+Send User ID: <input type="number" id="senduid" /> Message: <input type="text" id="message" /> <button id="sendmessagebtn">发送消息</button>
+<hr/>
+RecvUser ID: <input type="number" id="uid" /> <button id="getmessagebtn">接收消息</button> <button id="stopgetmessagebtn">停止接收消息</button>
+<div id="messagelist"></div>
+</body>
+</html>
