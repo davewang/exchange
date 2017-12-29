@@ -110,26 +110,37 @@ func PollMessageServer(w http.ResponseWriter, req *http.Request) {
     }
 }
 
+func newRouter() *mux.Router {
+    r := mux.NewRouter()
+    
+
+    // Declare the static file directory and point it to the 
+    // directory we just made
+    staticFileDirectory := http.Dir("./assets/")
+    // Declare the handler, that routes requests to their respective filename.
+    // The fileserver is wrapped in the `stripPrefix` method, because we want to
+    // remove the "/assets/" prefix when looking for files.
+    // For example, if we type "/assets/index.html" in our browser, the file server
+    // will look for only "index.html" inside the directory declared above.
+    // If we did not strip the prefix, the file server would look for 
+    // "./assets/assets/index.html", and yield an error
+    staticFileHandler := http.StripPrefix("/assets/", http.FileServer(staticFileDirectory))
+    // The "PathPrefix" method acts as a matcher, and matches all routes starting
+    // with "/assets/", instead of the absolute route itself
+    r.PathPrefix("/assets/").Handler(staticFileHandler).Methods("GET")
+
+    r.HandleFunc("/sendmessage", SendMessageServer)
+    r.HandleFunc("/pollmessage", PollMessageServer)
+
+    return r
+}
+
 func main() {
 
 	mc = NewMessageCenter()
 	// Declare a new router
-	r := mux.NewRouter()
+	r := newRouter()
 
-	// Declare the static file directory and point it to the 
-	// directory we just made
-	staticFileDirectory := http.Dir("./assets/")
-	staticFileHandler := http.StripPrefix("/assets/", http.FileServer(staticFileDirectory))
-	// The "PathPrefix" method acts as a matcher, and matches all routes starting
-	// with "/assets/", instead of the absolute route itself
-	r.PathPrefix("/assets/").Handler(staticFileHandler).Methods("GET")
-	// This is where the router is useful, it allows us to declare methods that
-	// this path will be valid for
-	r.HandleFunc("/sendmessage", SendMessageServer)
-    r.HandleFunc("/pollmessage", PollMessageServer)
-
-	// We can then pass our router (after declaring all our routes) to this method
-	// (where previously, we were leaving the secodn argument as nil)
 	http.ListenAndServe(":8080", r)
 }
 
