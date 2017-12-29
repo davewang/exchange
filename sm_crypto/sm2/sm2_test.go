@@ -11,7 +11,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"exchange/sm_crypto/sm3"
+    "exchange/sm_crypto/sm3"
 	"testing"
 )
 
